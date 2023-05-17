@@ -23,7 +23,7 @@ library(pander)
 
 # Create a tab function
 tab <- function(...){
-  pander(table(..., useNA = "always"))
+  table(..., useNA = "always")
 }
 
 ```
@@ -246,6 +246,120 @@ reg_status$Age %>% tab
 
 # Drop persons above age 50 and who are above 15
 exp <- reg_status %>% filter(Age %in% 15:50)
+
+```
+
+Check the status variable, which contains missing values. Create a flag-variable, which is 1 for people.
+
+```{r}
+# Create flag
+reg_status <- reg_status %>% group_by(ID) %>% mutate(check = any(is.na(Status)))
+
+
+# How many individuals have a missing
+reg_status %>% filter(check) %>% pull(ID) %>% unique %>% length
+
+```
+
+
+
+The following code inserts a row into the population data, that was absent. This caused issues when merging the data.
+
+```{r}
+# Create a new row
+additional_row <- reg_status %>% filter(ID == 4 & Year == 2004)
+additional_row$Year <- 2003
+
+# Bind rows
+reg_status <- rbind(reg_status, additional_row)
+
+# Arrange the data
+reg_status <- reg_status %>% arrange(ID, Year)
+
+```
+
+### Births file
+
+There is on issue with the birth data, because there are missing information on the ID of the parent.
+
+```{r}
+# Look at the data
+tibble(births)
+
+# Are there missing values
+summary(births)
+
+```
+
+
+Moreover, there are birth information before the year of the population data.
+
+```{r}
+# Yeaer distribution
+births$Year %>% tab
+
+```
+
+
+What are the parities.
+
+```{r}
+# Look at the parities
+births %>% group_by(Father) %>% count() %>% pander()
+births %>% group_by(Mother) %>% count() %>% pander()
+```
+
+```{r}
+# Pivot longer
+births_long <- births %>% pivot_longer(cols = c(Mother, Father), names_to = "Sex", values_to = "ID")
+
+# Different version
+mothers <- births %>% select(Mother, Year) %>%  rename(ID = Mother)
+fathers <- births %>% select(Father, Year) %>% rename(ID = Father)
+
+# Assign to each
+mothers$FNR <- 0
+fathers$FNR <- 1:dim(fathers)[1]
+
+# Bind the rows
+birthstmp <- rbind(mothers, fathers)
+
+# Add the birth count variable
+birthstmp$Birth <- 1
+
+
+# Combine with the register data
+reg_status <- left_join(reg_status, birthstmp)
+
+#
+reg_status %>% group_by(ID) %>% pull(Year) %>% diff
+```
+
+*Always check individual data!!!* For instance, when merging two data files, look at individual cases, and check whether the events are translated. Than, count the number of events and compare the event-file with the exposure file. 
+
+
+
+The problem is that a birth can be related to several persons. The reason is that in birth file are different ID-values than in the population registers
+
+```{r}
+# Reg status
+reg_status %>% filter(Gender == 1) %>%  pull(Birth) %>% sum(na.rm = T)
+reg_status %>% filter(Gender == 2) %>%  pull(Birth) %>% sum(na.rm = T)
+
+# Event file
+births %>% filter(Year %in% 1990:2020 & !is.na(Mother) & Mother %in% reg_status$ID) %>% select(Mother) %>% count()
+births %>% filter(Year %in% 1990:2020 & !is.na(Father) & Father %in% reg_status$ID) %>% select(Father) %>% count()
+
+```
+
+Apparently, one respondent (ID = 4) has a missing spell in the population data. We can insert a new variable
+
+
+
+### Estimate the parity and employment status
+
+```{r}
+
 
 ```
 
