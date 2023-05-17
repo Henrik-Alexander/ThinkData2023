@@ -1,0 +1,152 @@
+---
+title: "Notes Administrative Register Data"
+author: "Henrik-Alexander Schubert"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+
+```{r, echo = FALSE}
+# Load the packages
+library(httr)
+library(data.table)
+library(dtplyr)
+library(tidyverse)
+library(microbenchmark)
+```
+
+# Introduction
+
+Administrative register data:
+
+ * *administrative* = derived from administrative system
+ * *register* = run continuously, full target system
+ * *data* = quantitative, rectangular data
+ 
+Examples: population, vital, housing, tax, health, migration registers...
+
+
+Registers rely on procedures which translate the event or the count into the register data. This includes several steps, filling in forms, sending documents between persons and organisations, writing it into a computer system. This step-wise process has implications for data quality.
+
+### Advantages
+
+1. Size: not just a sample, often large
+
+2. Participation: often compulsory (legally required), sometimes highly incentived
+
+3. Data quality: often no missing values
+
+### Specialities of ARD
+
+* Found data:
+
+    * not collected for research
+
+    * often messy, fragmented, semi-systematic
+    
+* Big data: often large and complex
+
+### Challenges
+
+* Ethical
+
+  * no informed consent
+  
+  * misuse of registers
+
+* Legal
+
+  * Data protection laws (e.g. GDPR)
+  
+  * Limited access and control
+
+* Technical
+
+  * requires a lot of computing power $O(n)$ vs $O(n^2)$
+  
+  * complexity: format, inconsistencies (variable names, variables, coverage)
+
+* Practical
+
+  * documentation
+  
+  * Language: Data, documentation, experts
+
+* Quality
+
+  * *Total survey error framework*
+  
+      * Measurement
+      
+      * Representation
+      
+      
+  ![Source: Groves et al. 2003, Survey Methodology](Images/error_framework.png)
+  
+  * sources of error
+  
+  
+
+# Handling of big data, classic administrative register data
+
+
+1. Discovery: Learn about the data
+
+2. Structuring: Bring it in a format ready for analysis
+
+3. Cleaning: Edit variables, create new variables, etc.
+
+4. Enriching: Combine with other data soucres
+
+5. Validating: Did the previous steps work as planned?
+
+6. Analysis: Run your analysis
+
+
+### Example: US birth statistics
+
+First, we are downloading the birth data for the year 1990 form the website (NBER)[https://data.nber.org/natality/]. The data comes as a zip-file.
+
+```{r download-data}
+# Where is the data?
+url <- "https://data.nber.org/natality/1990/natl1990.csv.zip"
+
+# Where to save it?
+zipfile <- "C:/Users/Lenovo/Tmp/natl1990.csv.zip"
+
+# Download
+if(!exists(zipfile)){
+GET(url, write_disk(zipfile, overwrite = TRUE)) #, progress() 
+}
+
+# Check size: file size in bytes
+file.size(zipfile)
+
+```
+
+
+In the next step, we want to unzip the data. We use the two packages. We use `fread` from the `data.table` package, which does lazy-loading. This means that the data does not get loaded completely into the memory. 
+
+```{r load-data}
+# Load the data
+command <- "unzip -cq"
+cmdzip <- paste(command, zipfile)
+dat <- fread(cmd=cmdzip)
+```
+
+
+In the next step, we look at the age distribution of mothers.
+
+```{r}
+# Age distribution
+dat[ , .N, by = dmage]
+
+
+```
+
+
+# Complex administrative register data

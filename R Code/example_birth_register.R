@@ -29,13 +29,19 @@ library(microbenchmark)
 url <- "https://data.nber.org/natality/1990/natl1990.csv.zip"
 
 # Where to save it?
-zipfile <- "U:/Tmp/natl1990.csv.zip"
+zipfile <- "C:/Users/Lenovo/Tmp/natl1990.csv.zip"
 
 # Download
 GET(url, write_disk(zipfile, overwrite = TRUE), progress() )
 
 # Check size 
 file.size(zipfile)
+
+# -------------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------------
+
 
 
 ### Loading data ###############################################################
